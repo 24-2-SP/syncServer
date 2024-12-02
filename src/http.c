@@ -164,46 +164,27 @@ void get(int cfd, const char *fname)
 // http 응답 -> 클라이언트로 전송
 void response(int cfd, int status, const char *statusM, const char *types, const char *body)
 {
-    char *buf = (char *)malloc(BUFFER_SIZE);
-    if (!buf)
+     char header[BUFFER_SIZE];
+    int header_len = snprintf(header, sizeof(header),
+                              "HTTP/1.1 %d %s\r\n"
+                              "Content-Type: %s\r\n"
+                              "Content-Length: %ld\r\n"
+                              "\r\n",
+                              status, statusM, types, body ? strlen(body) : 0);
+
+    // 헤더 전송
+    if (write(cfd, header, header_len) == -1)
     {
-        perror("malloc failed");
+        perror("Failed to send HTTP response header");
         close(cfd);
         return;
     }
-    int needed_size = snprintf(buf, BUFFER_SIZE,
-                               "HTTP/1.1 %d %s\r\n"
-                               "Content-Type: %s\r\n"
-                               "Content-Length: %ld\r\n"
-                               "\r\n"
-                               "%s",
-                               status, statusM, types, strlen(body), body);
 
-    // 반환된 크기가 현재 버퍼 크기를 초과하는 경우
-    if (needed_size >= BUFFER_SIZE)
+    // 본문 전송 (HEAD 요청의 경우 본문 생략)
+    if (body && write(cfd, body, strlen(body)) == -1)
     {
-        size_t size = needed_size + 1; // null-terminator 포함
-        buf = (char *)realloc(buf, size);
-        if (!buf)
-        {
-            perror("realloc failed");
-            close(cfd);
-            return;
-        }
-
-        // 다시 작성
-        snprintf(buf, size,
-                 "HTTP/1.1 %d %s\r\n"
-                 "Content-Type: %s\r\n"
-                 "Content-Length: %ld\r\n"
-                 "\r\n"
-                 "%s",
-                 status, statusM, types, strlen(body), body);
+        perror("Failed to send HTTP response body");
     }
-
-    // 클라이언트로 데이터 전송
-    write(cfd, buf, strlen(buf));
-    free(buf);
 }
 
 void head(int cfd, const char *fname)
