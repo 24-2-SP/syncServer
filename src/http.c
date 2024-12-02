@@ -6,37 +6,57 @@ void request(int cfd)
     char buf[BUFFER_SIZE];
     int bytes = read(cfd, buf, sizeof(buf) - 1);
 
-    if (bytes < 0)
+    if (bytes <= 0)
     {
-        perror("read failed");
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+            perror("read failed");
         close(cfd);
         return;
     }
-    buf[bytes] = '\0';
+    buf[bytes] = '\0'; // 문자열 종료
 
     // 요청 파싱
-    char method[16], path[256], protocol[16];
-    sscanf(buf, "%s %s %s", method, path, protocol);
-    printf("Client request:\n");
-    printf("Method: %s, Path: %s, Protocol: %s\n", method, path, protocol);
+    char method[16] = {0}, path[256] = {0}, protocol[16] = {0};
+    if (sscanf(buf, "%15s %255s %15s", method, path, protocol) != 3)
+    {
+        fprintf(stderr, "Invalid request format\n");
+        const char *body = "<html><body><h1>400 Bad Request</h1></body></html>";
+        response(cfd, 400, "Bad Request", "text/html", body);
+        close(cfd);
+        return;
+    }
 
-    // 요청 메소드 GET인 경우 고려
+    printf("Client request:\nMethod: %s, Path: %s, Protocol: %s\n", method, path, protocol);
+
+    // 요청 URL 유효성 검증
+    if (strlen(path) < 2 || path[0] != '/')
+    {
+        fprintf(stderr, "Invalid path\n");
+        const char *body = "<html><body><h1>400 Bad Request</h1></body></html>";
+        response(cfd, 400, "Bad Request", "text/html", body);
+        close(cfd);
+        return;
+    }
+
+    // 요청 메소드 처리
     if (strcmp(method, "GET") == 0)
     {
-        get(cfd, path + 1); // GET 요청 처리
+        get(cfd, path + 1); // `get` 함수 호출 (path 앞의 '/' 제거)
     }
     else if (strcmp(method, "HEAD") == 0)
     {
-        head(cfd, path + 1); // HEAD 요청 처리
+        head(cfd, path + 1); // `head` 함수 호출 (path 앞의 '/' 제거)
     }
     else
     {
+        fprintf(stderr, "Unsupported method: %s\n", method);
         const char *body = "<html><body><h1>405 Method Not Allowed</h1></body></html>";
         response(cfd, 405, "Method Not Allowed", "text/html", body);
     }
+
+    // 소켓 닫기
     close(cfd);
 }
-
 // 파일 전송
 void get(int cfd, const char *fname)
 {

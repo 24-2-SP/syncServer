@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
