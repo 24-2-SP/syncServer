@@ -6,7 +6,7 @@ void request(int cfd)
     char buf[BUFFER_SIZE];
     int bytes = read(cfd, buf, sizeof(buf) - 1);
 
-    if (bytes <= 0)
+    if (bytes < 0)
     {
         perror("read failed");
         close(cfd);
