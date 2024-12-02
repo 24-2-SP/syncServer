@@ -31,7 +31,6 @@ int main()
             // 자식 프로세스에서 클라이언트 요청 처리
             close(sfd);   // 부모 서버 소켓 닫기
             request(cfd); // 클라이언트 요청 처리
-            close(cfd);   // 클라이언트 소켓 닫기
             exit(0);
         }
         else if (pid > 0)
