@@ -1,7 +1,7 @@
 #include "../include/main.h"
 
 // 클라이언트 요청 처리
-void handle_req(int cfd)
+void request(int cfd)
 {
     char buf[BUFFER_SIZE];
     int bytes = read(cfd, buf, sizeof(buf) - 1);
@@ -23,11 +23,11 @@ void handle_req(int cfd)
     // 요청 메소드 GET인 경우 고려
     if (strcmp(method, "GET") == 0)
     {
-        handle_get(cfd, path + 1); // GET 요청 처리
+        get(cfd, path + 1); // GET 요청 처리
     }
     else if (strcmp(method, "HEAD") == 0)
     {
-        handle_head(cfd, path + 1); // HEAD 요청 처리
+        head(cfd, path + 1); // HEAD 요청 처리
     }
     else
     {
@@ -35,11 +35,10 @@ void handle_req(int cfd)
         response(cfd, 405, "Method Not Allowed", "text/html", body);
     }
     close(cfd);
-
 }
 
-//파일 전송
-void handle_get(int cfd, const char *fname)
+// 파일 전송
+void get(int cfd, const char *fname)
 {
     char path[256];
     snprintf(path, sizeof(path), "file/%s", fname);
@@ -187,7 +186,7 @@ void response(int cfd, int status, const char *statusM, const char *types, const
     free(buf);
 }
 
-void handle_head(int cfd, const char *fname)
+void head(int cfd, const char *fname)
 {
     char path[100];
     snprintf(path, sizeof(path), "file/%s", fname);

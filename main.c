@@ -4,7 +4,7 @@ int main()
 {
     // SIGCHLD 시그널 핸들러 설정
     struct sigaction sa;
-    sa.sa_handler = handle_sigchld;
+    sa.sa_handler = sigchld;
     sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
     sigaction(SIGCHLD, &sa, NULL);
 
@@ -23,16 +23,16 @@ int main()
             continue;
         }
         printf("new client : %d\n", cfd);
-    
+
         // 자식 프로세스 생성
         pid_t pid = fork();
         if (pid == 0)
         {
             // 자식 프로세스에서 클라이언트 요청 처리
-            close(sfd); // 부모 서버 소켓 닫기
-            handle_req(cfd); //클라이언트 요청 처리
-            close(cfd); //클라이언트 소켓 닫기
-            exit(0); 
+            close(sfd);   // 부모 서버 소켓 닫기
+            request(cfd); // 클라이언트 요청 처리
+            close(cfd);   // 클라이언트 소켓 닫기
+            exit(0);
         }
         else if (pid > 0)
         {

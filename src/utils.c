@@ -1,7 +1,7 @@
 #include "../include/main.h"
 
 // SIGCHLD 시그널 핸들러
-void handle_sigchld(int sig)
+void sigchld(int sig)
 {
     while (waitpid(-1, NULL, WNOHANG) > 0)
     {
